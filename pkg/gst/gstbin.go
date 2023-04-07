@@ -1282,3 +1282,12 @@ func (b *BinClass) ParentClass() *ElementClass {
 	_v = (*ElementClass)(gextras.NewStructNative(unsafe.Pointer(valptr)))
 	return _v
 }
+
+func (bin *Bin) AddMany(elements ...Elementer) bool {
+	for _, elem := range elements {
+		if !bin.Add(elem) {
+			return false
+		}
+	}
+	return false
+}
