@@ -2235,3 +2235,7 @@ func (buffer *Buffer) UnsetFlags(flags BufferFlags) bool {
 
 	return _ok
 }
+
+func (b *Buffer) SetPts(dur ClockTime) {
+	b.native.pts = C.ulong(dur)
+}

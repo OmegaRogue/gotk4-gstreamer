@@ -3,7 +3,10 @@
 package gst
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"runtime"
 	"strings"
 	"unsafe"
@@ -15,6 +18,9 @@ import (
 // #include <stdlib.h>
 // #include <glib-object.h>
 // #include <gst/gst.h>
+//
+// void memcpy_offset (void * dest, guint offset, const void * src, size_t n) { memcpy(dest + offset, src, n); }
+//
 import "C"
 
 // GType values.
@@ -638,4 +644,68 @@ func (mem *Memory) Unmap(info *MapInfo) {
 	C.gst_memory_unmap(_arg0, _arg1)
 	runtime.KeepAlive(mem)
 	runtime.KeepAlive(info)
+}
+
+// Reader returns a Reader for the contents of this map's memory.
+func (m *MapInfo) Reader() io.Reader {
+	return bytes.NewReader(m.Bytes())
+}
+
+// Bytes returns a byte slice of the data inside this map info.
+func (m *MapInfo) Bytes() []byte {
+	return C.GoBytes(m.Data(), (C.int)(m.Size()))
+}
+
+// Data returns a pointer to the raw data inside this map.
+func (m *MapInfo) Data() unsafe.Pointer {
+	return unsafe.Pointer(m.native.data)
+}
+
+// Size returrns the size of this map.
+func (m *MapInfo) Size() int64 {
+	return int64(m.native.size)
+}
+
+type mapInfoWriter struct {
+	mapInfo *MapInfo
+	wsize   int
+}
+
+func (m *mapInfoWriter) Write(p []byte) (int, error) {
+	if m.wsize+len(p) > int(m.mapInfo.Size()) {
+		return 0, errors.New("Attempt to write more data than allocated to MapInfo")
+	}
+	m.mapInfo.WriteAt(m.wsize, p)
+	m.wsize += len(p)
+	return len(p), nil
+}
+
+// Writer returns a writer that will copy the contents passed to Write directly to the
+// map's memory sequentially. An error will be returned if an attempt is made to write
+// more data than the map can hold.
+func (m *MapInfo) Writer() io.Writer {
+	return &mapInfoWriter{
+		mapInfo: m,
+		wsize:   0,
+	}
+}
+
+// WriteData writes the given sequence directly to the map's memory.
+func (m *MapInfo) WriteData(data []byte) {
+	C.memcpy(unsafe.Pointer(m.native.data), unsafe.Pointer(&data[0]), C.gsize(len(data)))
+}
+
+// WriteAt writes the given data sequence directly to the map's memory at the given offset.
+func (m *MapInfo) WriteAt(offset int, data []byte) {
+	C.memcpy_offset(unsafe.Pointer(m.native.data), C.guint(offset), unsafe.Pointer(&data[0]), C.gsize(len(data)))
+}
+
+// MaxSize returns the maximum size of this map.
+func (m *MapInfo) MaxSize() int64 {
+	return int64(m.native.maxsize)
+}
+
+// Flags returns the flags set on this map.
+func (m *MapInfo) Flags() MapFlags {
+	return MapFlags(m.native.flags)
 }
