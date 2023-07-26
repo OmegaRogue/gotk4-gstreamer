@@ -431,7 +431,7 @@ func (appsrc *AppSrc) EndOfStream() gst.FlowReturn {
 //
 // The function returns the following values:
 //
-//    - caps produced by the source. gst_caps_unref() after usage.
+//    - caps (optional) produced by the source. gst_caps_unref() after usage.
 //
 func (appsrc *AppSrc) Caps() *gst.Caps {
 	var _arg0 *C.GstAppSrc // out
@@ -444,13 +444,15 @@ func (appsrc *AppSrc) Caps() *gst.Caps {
 
 	var _caps *gst.Caps // out
 
-	_caps = (*gst.Caps)(gextras.NewStructNative(unsafe.Pointer(_cret)))
-	runtime.SetFinalizer(
-		gextras.StructIntern(unsafe.Pointer(_caps)),
-		func(intern *struct{ C unsafe.Pointer }) {
-			C.free(intern.C)
-		},
-	)
+	if _cret != nil {
+		_caps = (*gst.Caps)(gextras.NewStructNative(unsafe.Pointer(_cret)))
+		runtime.SetFinalizer(
+			gextras.StructIntern(unsafe.Pointer(_caps)),
+			func(intern *struct{ C unsafe.Pointer }) {
+				C.free(intern.C)
+			},
+		)
+	}
 
 	return _caps
 }
@@ -1279,4 +1281,13 @@ func (a *AppSrcClass) BasesrcClass() *gstbase.BaseSrcClass {
 	var _v *gstbase.BaseSrcClass // out
 	_v = (*gstbase.BaseSrcClass)(gextras.NewStructNative(unsafe.Pointer(valptr)))
 	return _v
+}
+
+func (appsrc *AppSrc) Write(data []byte) (n int, err error) {
+	buffer := gst.NewBufferAllocate(nil, uint(len(data)), gst.NewAllocationParams())
+	mapInfo, _ := buffer.Map(gst.MapWrite)
+	mapInfo.WriteData(data)
+	buffer.Unmap(mapInfo)
+	appsrc.PushBuffer(buffer)
+	return len(data), nil
 }

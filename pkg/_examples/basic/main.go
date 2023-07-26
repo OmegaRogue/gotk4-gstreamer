@@ -2,16 +2,14 @@ package main
 
 import "C"
 import (
-	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"os"
-	"time"
 
 	coregst "github.com/OmegaRogue/gotk4-gstreamer/pkg/core/gst"
 	"github.com/OmegaRogue/gotk4-gstreamer/pkg/gst"
 	"github.com/OmegaRogue/gotk4-gstreamer/pkg/gstapp"
-	"github.com/OmegaRogue/gotk4-gstreamer/pkg/gstvideo"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -20,6 +18,9 @@ import (
 func main() {
 	app := gtk.NewApplication("com.github.diamondburned.gotk4-examples.gtk4.simple", gio.ApplicationFlagsNone)
 	app.ConnectActivate(func() { activate(app) })
+	app.ConnectShutdown(func() {
+		gst.Deinit()
+	})
 
 	if code := app.Run(os.Args); code > 0 {
 		os.Exit(code)
@@ -28,67 +29,31 @@ func main() {
 
 func activate(app *gtk.Application) {
 	gst.Init()
-	fmt.Println(gst.IsInitialized())
-
 	source := gst.ElementFactoryMake("appsrc", "source").(*gstapp.AppSrc)
 	convert := gst.ElementFactoryMake("videoconvert", "convert")
 	sink := gst.ElementFactoryMake("gtk4paintablesink", "sink")
 
-	source.SetObjectProperty("stream-type", gstapp.AppStreamTypeStream)
-	source.SetObjectProperty("format", gst.FormatTime)
-	info := gstvideo.NewVideoInfo()
-	info.SetFormat(gstvideo.VideoFormatRGBA, 1280, 720)
-	info.SetFPSN(2)
-	info.SetFPSD(1)
-	source.SetCaps(info.ToCaps())
-
-	var i int
-	palette := gstvideo.VideoFormatRGB8P.Palette()
+	file, _ := os.OpenFile("/home/omegarogue/Videos/anime/jojo-no-kimyou-na-bouken-diamond-wa-kudakenai-episode--001.mp4", os.O_RDONLY, 0644)
 
 	source.ConnectNeedData(func(length uint) {
-		if i == len(palette) {
-			source.EndOfStream()
-			return
-		}
-		fmt.Println("Producing frame:", i)
-		buffer := gst.NewBufferAllocate(nil, info.Size(), gst.NewAllocationParams())
-		buffer.SetPts(gst.ClockTime((time.Duration(i) * 500 * time.Millisecond).Nanoseconds()))
-		pixels := produceImageFrame(palette[i])
-		mapInfo, _ := buffer.Map(gst.MapWrite)
-		mapInfo.WriteData(pixels)
-		buffer.Unmap(mapInfo)
-
-		source.PushBuffer(buffer)
-
-		i++
+		io.Copy(source, file)
 	})
 
 	pipeline := gst.NewPipeline("test-pipeline")
-
 	pipeline.AddMany(source, convert, sink)
 	coregst.ElementLinkMany(source, convert, sink)
 
 	paintable := sink.ObjectProperty("paintable").(gdk.Paintabler)
-	//caps := coregst.NewCapsSimple("video/x-raw",
-	//	map[string]*coreglib.Value{
-	//		"framerate":          coregst.NewFraction(30, 1),
-	//		"pixel-aspect-ratio": coregst.NewFraction(1, 1),
-	//		"width":              coreglib.NewValue(1280),
-	//		"height":             coreglib.NewValue(720),
-	//	})
-
-	//capsfilter.SetObjectProperty("caps", caps)
 
 	picture := gtk.NewPicture()
 	picture.SetPaintable(paintable)
-
 	pipeline.SetState(gst.StatePlaying)
 
 	window := gtk.NewApplicationWindow(app)
 	window.SetTitle("gstreamer Example")
 	window.SetChild(picture)
-	window.SetDefaultSize(400, 300)
 	window.Show()
+
 }
 
 func produceImageFrame(c color.Color) []uint8 {

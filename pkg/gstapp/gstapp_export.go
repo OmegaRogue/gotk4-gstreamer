@@ -15,6 +15,143 @@ import (
 // #include <gst/app/app.h>
 import "C"
 
+//export _gotk4_gstapp1_AppSinkClass_eos
+func _gotk4_gstapp1_AppSinkClass_eos(arg0 *C.GstAppSink) {
+	instance0 := coreglib.Take(unsafe.Pointer(arg0))
+	overrides := coreglib.OverridesFromObj[AppSinkOverrides](instance0)
+	if overrides.Eos == nil {
+		panic("gotk4: " + instance0.TypeFromInstance().String() + ": expected AppSinkOverrides.Eos, got none")
+	}
+
+	overrides.Eos()
+}
+
+//export _gotk4_gstapp1_AppSinkClass_new_preroll
+func _gotk4_gstapp1_AppSinkClass_new_preroll(arg0 *C.GstAppSink) (cret C.GstFlowReturn) {
+	instance0 := coreglib.Take(unsafe.Pointer(arg0))
+	overrides := coreglib.OverridesFromObj[AppSinkOverrides](instance0)
+	if overrides.NewPreroll == nil {
+		panic("gotk4: " + instance0.TypeFromInstance().String() + ": expected AppSinkOverrides.NewPreroll, got none")
+	}
+
+	flowReturn := overrides.NewPreroll()
+
+	var _ gst.FlowReturn
+
+	cret = C.GstFlowReturn(flowReturn)
+
+	return cret
+}
+
+//export _gotk4_gstapp1_AppSinkClass_new_sample
+func _gotk4_gstapp1_AppSinkClass_new_sample(arg0 *C.GstAppSink) (cret C.GstFlowReturn) {
+	instance0 := coreglib.Take(unsafe.Pointer(arg0))
+	overrides := coreglib.OverridesFromObj[AppSinkOverrides](instance0)
+	if overrides.NewSample == nil {
+		panic("gotk4: " + instance0.TypeFromInstance().String() + ": expected AppSinkOverrides.NewSample, got none")
+	}
+
+	flowReturn := overrides.NewSample()
+
+	var _ gst.FlowReturn
+
+	cret = C.GstFlowReturn(flowReturn)
+
+	return cret
+}
+
+//export _gotk4_gstapp1_AppSinkClass_pull_preroll
+func _gotk4_gstapp1_AppSinkClass_pull_preroll(arg0 *C.GstAppSink) (cret *C.GstSample) {
+	instance0 := coreglib.Take(unsafe.Pointer(arg0))
+	overrides := coreglib.OverridesFromObj[AppSinkOverrides](instance0)
+	if overrides.PullPreroll == nil {
+		panic("gotk4: " + instance0.TypeFromInstance().String() + ": expected AppSinkOverrides.PullPreroll, got none")
+	}
+
+	sample := overrides.PullPreroll()
+
+	var _ *gst.Sample
+
+	if sample != nil {
+		cret = (*C.GstSample)(gextras.StructNative(unsafe.Pointer(sample)))
+		runtime.SetFinalizer(gextras.StructIntern(unsafe.Pointer(sample)), nil)
+	}
+
+	return cret
+}
+
+//export _gotk4_gstapp1_AppSinkClass_pull_sample
+func _gotk4_gstapp1_AppSinkClass_pull_sample(arg0 *C.GstAppSink) (cret *C.GstSample) {
+	instance0 := coreglib.Take(unsafe.Pointer(arg0))
+	overrides := coreglib.OverridesFromObj[AppSinkOverrides](instance0)
+	if overrides.PullSample == nil {
+		panic("gotk4: " + instance0.TypeFromInstance().String() + ": expected AppSinkOverrides.PullSample, got none")
+	}
+
+	sample := overrides.PullSample()
+
+	var _ *gst.Sample
+
+	if sample != nil {
+		cret = (*C.GstSample)(gextras.StructNative(unsafe.Pointer(sample)))
+		runtime.SetFinalizer(gextras.StructIntern(unsafe.Pointer(sample)), nil)
+	}
+
+	return cret
+}
+
+//export _gotk4_gstapp1_AppSinkClass_try_pull_preroll
+func _gotk4_gstapp1_AppSinkClass_try_pull_preroll(arg0 *C.GstAppSink, arg1 C.GstClockTime) (cret *C.GstSample) {
+	instance0 := coreglib.Take(unsafe.Pointer(arg0))
+	overrides := coreglib.OverridesFromObj[AppSinkOverrides](instance0)
+	if overrides.TryPullPreroll == nil {
+		panic("gotk4: " + instance0.TypeFromInstance().String() + ": expected AppSinkOverrides.TryPullPreroll, got none")
+	}
+
+	var _timeout gst.ClockTime // out
+
+	_timeout = uint64(arg1)
+	type _ = gst.ClockTime
+	type _ = uint64
+
+	sample := overrides.TryPullPreroll(_timeout)
+
+	var _ *gst.Sample
+
+	if sample != nil {
+		cret = (*C.GstSample)(gextras.StructNative(unsafe.Pointer(sample)))
+		runtime.SetFinalizer(gextras.StructIntern(unsafe.Pointer(sample)), nil)
+	}
+
+	return cret
+}
+
+//export _gotk4_gstapp1_AppSinkClass_try_pull_sample
+func _gotk4_gstapp1_AppSinkClass_try_pull_sample(arg0 *C.GstAppSink, arg1 C.GstClockTime) (cret *C.GstSample) {
+	instance0 := coreglib.Take(unsafe.Pointer(arg0))
+	overrides := coreglib.OverridesFromObj[AppSinkOverrides](instance0)
+	if overrides.TryPullSample == nil {
+		panic("gotk4: " + instance0.TypeFromInstance().String() + ": expected AppSinkOverrides.TryPullSample, got none")
+	}
+
+	var _timeout gst.ClockTime // out
+
+	_timeout = uint64(arg1)
+	type _ = gst.ClockTime
+	type _ = uint64
+
+	sample := overrides.TryPullSample(_timeout)
+
+	var _ *gst.Sample
+
+	if sample != nil {
+		cret = (*C.GstSample)(gextras.StructNative(unsafe.Pointer(sample)))
+		runtime.SetFinalizer(gextras.StructIntern(unsafe.Pointer(sample)), nil)
+	}
+
+	return cret
+}
+
 //export _gotk4_gstapp1_AppSrcClass_end_of_stream
 func _gotk4_gstapp1_AppSrcClass_end_of_stream(arg0 *C.GstAppSrc) (cret C.GstFlowReturn) {
 	instance0 := coreglib.Take(unsafe.Pointer(arg0))

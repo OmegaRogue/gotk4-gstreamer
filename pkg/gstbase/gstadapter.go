@@ -519,6 +519,41 @@ func (adapter *Adapter) List(nbytes uint) []*gst.Buffer {
 	return _list
 }
 
+// Map gets the first size bytes stored in the adapter. The returned pointer is
+// valid until the next function is called on the adapter.
+//
+// Note that setting the returned pointer as the data of a Buffer is incorrect
+// for general-purpose plugins. The reason is that if a downstream element
+// stores the buffer so that it has access to it outside of the bounds of its
+// chain function, the buffer will have an invalid data pointer after your
+// element flushes the bytes. In that case you should use gst_adapter_take(),
+// which returns a freshly-allocated buffer that you can set as Buffer memory or
+// the potentially more performant gst_adapter_take_buffer().
+//
+// Returns NULL if size bytes are not available.
+//
+// The function returns the following values:
+//
+//    - guint8s (optional): a pointer to the first size bytes of data, or NULL.
+//
+func (adapter *Adapter) Map() []byte {
+	var _arg0 *C.GstAdapter   // out
+	var _cret C.gconstpointer // in
+	var size uint             // in
+
+	_arg0 = (*C.GstAdapter)(unsafe.Pointer(coreglib.InternObject(adapter).Native()))
+
+	_cret = C.gst_adapter_map(_arg0, _arg1)
+	runtime.KeepAlive(adapter)
+
+	var _guint8s []byte // out
+
+	_guint8s = make([]byte, size)
+	copy(_guint8s, unsafe.Slice((*byte)(unsafe.Pointer(_cret)), size))
+
+	return _guint8s
+}
+
 // MaskedScanUint32: scan for pattern pattern with applied mask mask in the
 // adapter data, starting from offset offset.
 //
@@ -899,6 +934,37 @@ func (adapter *Adapter) Push(buf *gst.Buffer) {
 	C.gst_adapter_push(_arg0, _arg1)
 	runtime.KeepAlive(adapter)
 	runtime.KeepAlive(buf)
+}
+
+// Take returns a freshly allocated buffer containing the first nbytes bytes of
+// the adapter. The returned bytes will be flushed from the adapter.
+//
+// Caller owns returned value. g_free after usage.
+//
+// Free-function: g_free.
+//
+// The function returns the following values:
+//
+//    - guint8s (optional): oven-fresh hot data, or NULL if nbytes bytes are not
+//      available.
+//
+func (adapter *Adapter) Take() []byte {
+	var _arg0 *C.GstAdapter // out
+	var _cret C.gpointer    // in
+	var nbytes uint         // in
+
+	_arg0 = (*C.GstAdapter)(unsafe.Pointer(coreglib.InternObject(adapter).Native()))
+
+	_cret = C.gst_adapter_take(_arg0, _arg1)
+	runtime.KeepAlive(adapter)
+
+	var _guint8s []byte // out
+
+	defer C.free(unsafe.Pointer(_cret))
+	_guint8s = make([]byte, nbytes)
+	copy(_guint8s, unsafe.Slice((*byte)(unsafe.Pointer(_cret)), nbytes))
+
+	return _guint8s
 }
 
 // TakeBuffer returns a Buffer containing the first nbytes bytes of the adapter.

@@ -990,6 +990,44 @@ func (parent *Buffer) CopyRegion(flags BufferCopyFlags, offset uint, size uint) 
 	return _buffer
 }
 
+// Extract copies size bytes starting from offset in buffer to dest.
+//
+// The function takes the following parameters:
+//
+//    - offset to extract.
+//    - dest: the destination address.
+//
+// The function returns the following values:
+//
+//    - gsize: amount of bytes extracted. This value can be lower than size when
+//      buffer did not contain enough data.
+//
+func (buffer *Buffer) Extract(offset uint, dest []byte) uint {
+	var _arg0 *C.GstBuffer // out
+	var _arg1 C.gsize      // out
+	var _arg2 C.gpointer   // out
+	var _arg3 C.gsize
+	var _cret C.gsize // in
+
+	_arg0 = (*C.GstBuffer)(gextras.StructNative(unsafe.Pointer(buffer)))
+	_arg1 = C.gsize(offset)
+	_arg3 = (C.gsize)(len(dest))
+	if len(dest) > 0 {
+		_arg2 = (C.gpointer)(unsafe.Pointer(&dest[0]))
+	}
+
+	_cret = C.gst_buffer_extract(_arg0, _arg1, _arg2, _arg3)
+	runtime.KeepAlive(buffer)
+	runtime.KeepAlive(offset)
+	runtime.KeepAlive(dest)
+
+	var _gsize uint // out
+
+	_gsize = uint(_cret)
+
+	return _gsize
+}
+
 // ExtractDup extracts a copy of at most size bytes the data at offset into
 // newly-allocated memory. dest must be freed using g_free() when done.
 //

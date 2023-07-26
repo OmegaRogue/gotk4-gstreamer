@@ -395,7 +395,7 @@ func (overlay *VideoOverlay) GotWindowHandle(handle uintptr) {
 	var _arg1 C.guintptr         // out
 
 	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
-	_arg1 = (C.guintptr)(unsafe.Pointer(handle))
+	_arg1 = (C.guintptr)(handle)
 
 	C.gst_video_overlay_got_window_handle(_arg0, _arg1)
 	runtime.KeepAlive(overlay)
@@ -506,7 +506,7 @@ func (overlay *VideoOverlay) SetWindowHandle(handle uintptr) {
 	var _arg1 C.guintptr         // out
 
 	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
-	_arg1 = (C.guintptr)(unsafe.Pointer(handle))
+	_arg1 = (C.guintptr)(handle)
 
 	C.gst_video_overlay_set_window_handle(_arg0, _arg1)
 	runtime.KeepAlive(overlay)
@@ -602,7 +602,7 @@ func (overlay *VideoOverlay) setWindowHandle(handle uintptr) {
 	var _arg1 C.guintptr         // out
 
 	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
-	_arg1 = (C.guintptr)(unsafe.Pointer(handle))
+	_arg1 = (C.guintptr)(handle)
 
 	C._gotk4_gstvideo1_VideoOverlay_virtual_set_window_handle(unsafe.Pointer(fnarg), _arg0, _arg1)
 	runtime.KeepAlive(overlay)

@@ -30,6 +30,55 @@ type byteReader struct {
 	native *C.GstByteReader
 }
 
+// Byte: current byte position.
+func (b *ByteReader) Byte() uint {
+	valptr := &b.native.byte
+	var _v uint // out
+	_v = uint(*valptr)
+	return _v
+}
+
+// Byte: current byte position.
+func (b *ByteReader) SetByte(_byte uint) {
+	valptr := &b.native.byte
+	*valptr = C.guint(_byte)
+}
+
+// DupData: free-function: g_free
+//
+// Returns a newly-allocated copy of the current data position if at least size
+// bytes are left and updates the current position. Free with g_free() when no
+// longer needed.
+//
+// The function returns the following values:
+//
+//    - val address of a #guint8 pointer variable in which to store the result.
+//    - ok: TRUE if successful, FALSE otherwise.
+//
+func (reader *ByteReader) DupData() ([]byte, bool) {
+	var _arg0 *C.GstByteReader // out
+	var _arg2 *C.guint8        // in
+	var size uint              // in
+	var _cret C.gboolean       // in
+
+	_arg0 = (*C.GstByteReader)(gextras.StructNative(unsafe.Pointer(reader)))
+
+	_cret = C.gst_byte_reader_dup_data(_arg0, _arg1, &_arg2)
+	runtime.KeepAlive(reader)
+
+	var _val []byte // out
+	var _ok bool    // out
+
+	defer C.free(unsafe.Pointer(_arg2))
+	_val = make([]byte, size)
+	copy(_val, unsafe.Slice((*byte)(unsafe.Pointer(_arg2)), size))
+	if _cret != 0 {
+		_ok = true
+	}
+
+	return _val, _ok
+}
+
 // DupStringUTF16: free-function: g_free
 //
 // Returns a newly-allocated copy of the current data position if there is a
@@ -138,6 +187,37 @@ func (reader *ByteReader) DupStringUTF32() ([]uint32, bool) {
 	}
 
 	return _str, _ok
+}
+
+// Data returns a constant pointer to the current data position if at least size
+// bytes are left and updates the current position.
+//
+// The function returns the following values:
+//
+//    - val address of a #guint8 pointer variable in which to store the result.
+//    - ok: TRUE if successful, FALSE otherwise.
+//
+func (reader *ByteReader) Data() ([]byte, bool) {
+	var _arg0 *C.GstByteReader // out
+	var _arg2 *C.guint8        // in
+	var size uint              // in
+	var _cret C.gboolean       // in
+
+	_arg0 = (*C.GstByteReader)(gextras.StructNative(unsafe.Pointer(reader)))
+
+	_cret = C.gst_byte_reader_get_data(_arg0, _arg1, &_arg2)
+	runtime.KeepAlive(reader)
+
+	var _val []byte // out
+	var _ok bool    // out
+
+	_val = make([]byte, size)
+	copy(_val, unsafe.Slice((*byte)(unsafe.Pointer(_arg2)), size))
+	if _cret != 0 {
+		_ok = true
+	}
+
+	return _val, _ok
 }
 
 // Float32Be: read a 32 bit big endian floating point value into val and update
@@ -986,6 +1066,37 @@ func (reader *ByteReader) MaskedScanUint32Peek(mask uint32, pattern uint32, offs
 	_guint = uint(_cret)
 
 	return _value, _guint
+}
+
+// PeekData returns a constant pointer to the current data position if at least
+// size bytes are left and keeps the current position.
+//
+// The function returns the following values:
+//
+//    - val address of a #guint8 pointer variable in which to store the result.
+//    - ok: TRUE if successful, FALSE otherwise.
+//
+func (reader *ByteReader) PeekData() ([]byte, bool) {
+	var _arg0 *C.GstByteReader // out
+	var _arg2 *C.guint8        // in
+	var size uint              // in
+	var _cret C.gboolean       // in
+
+	_arg0 = (*C.GstByteReader)(gextras.StructNative(unsafe.Pointer(reader)))
+
+	_cret = C.gst_byte_reader_peek_data(_arg0, _arg1, &_arg2)
+	runtime.KeepAlive(reader)
+
+	var _val []byte // out
+	var _ok bool    // out
+
+	_val = make([]byte, size)
+	copy(_val, unsafe.Slice((*byte)(unsafe.Pointer(_arg2)), size))
+	if _cret != 0 {
+		_ok = true
+	}
+
+	return _val, _ok
 }
 
 // PeekFloat32Be: read a 32 bit big endian floating point value into val but

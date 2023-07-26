@@ -3,6 +3,7 @@ package main
 //go:generate go run . -o ./pkg/
 
 import (
+	"os"
 	"regexp"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/diamondburned/gotk4/gir/cmd/gir-generate/genmain"
 	"github.com/diamondburned/gotk4/gir/girgen"
 	. "github.com/diamondburned/gotk4/gir/girgen/types"
+	"github.com/kr/pretty"
 )
 
 const (
@@ -69,9 +71,9 @@ var Data = genmain.Overlay(
 		Filters: []FilterMatcher{
 			AbsoluteFilter("C.gst_structure_from_string"),
 			// Appsink seems to be broken
-			AbsoluteFilter("GstApp.AppSink"),
+			//AbsoluteFilter("GstApp.AppSink"),
 			// Appsink seems to be broken
-			AbsoluteFilter("GstApp.AppSinkClass"),
+			//AbsoluteFilter("GstApp.AppSinkClass"),
 			//AbsoluteFilter("GstVideo.VideoOverlay.got_window_handle"),
 			//AbsoluteFilter("GstVideo.VideoOverlay.set_window_handle"),
 		},
@@ -82,6 +84,33 @@ var Data = genmain.Overlay(
 				p.AnyType = gir.AnyType{
 					Type: &gir.Type{Name: "gpointer"},
 				}
+			}),
+			RemoveDuplicates("GstVideo-1.VideoBufferFlags"),
+			RemoveDuplicates("GstVideo-1.VideoFrameFlags"),
+			ModifyParamDirections("GstBase-1.Adapter.take", map[string]string{
+				"nbytes": "in",
+			}),
+			ModifyParamDirections("GstBase-1.ByteReader.dup_data", map[string]string{
+				"size": "in",
+			}),
+			ModifyParamDirections("GstBase-1.ByteReader.get_data", map[string]string{
+				"size": "in",
+			}),
+			ModifyParamDirections("GstBase-1.ByteReader.peek_data", map[string]string{
+				"size": "in",
+			}),
+			ModifyParamDirections("Gst-1.Buffer.extract", map[string]string{
+				"size": "in",
+			}),
+			//ModifyParamDirections("Gst-1.TypeFind.peek", map[string]string{
+			//	"size":   "in",
+			//	"offset": "in",
+			//}),
+			ModifyParamDirections("GstBase-1.Adapter.map", map[string]string{
+				"size": "in",
+			}),
+			ModifyCallable("GstVideo-1.VideoOverlay.got_window_handle", func(c *gir.CallableAttrs) {
+				pretty.Println("GstVideo-1.VideoOverlay.got_window_handle", c)
 			}),
 		},
 		Postprocessors: map[string][]girgen.Postprocessor{
@@ -152,73 +181,6 @@ func bytesToColorPalette(in []uint8) color.Palette {
 	return palette
 }
 `,
-			//			"gstvideo/videooverlay.go": `
-			//// GotWindowHandle: this will post a "have-window-handle" element message on the
-			//// bus.
-			////
-			//// This function should only be used by video overlay plugin developers.
-			////
-			//// The function takes the following parameters:
-			////
-			////    - handle: platform-specific handle referencing the window.
-			////
-			//func (overlay *VideoOverlay) GotWindowHandle(handle uintptr) {
-			//	var _arg0 *C.GstVideoOverlay // out
-			//	var _arg1 C.guintptr         // out
-			//
-			//	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
-			//	_arg1 = (C.guintptr)(handle)
-			//
-			//	C.gst_video_overlay_got_window_handle(_arg0, _arg1)
-			//	runtime.KeepAlive(overlay)
-			//	runtime.KeepAlive(handle)
-			//}
-			//
-			//// SetWindowHandle: this will call the video overlay's set_window_handle method.
-			//// You should use this method to tell to an overlay to display video output to a
-			//// specific window (e.g. an XWindow on X11). Passing 0 as the handle will tell
-			//// the overlay to stop using that window and create an internal one.
-			////
-			//// The function takes the following parameters:
-			////
-			////    - handle referencing the window.
-			////
-			//func (overlay *VideoOverlay) SetWindowHandle(handle uintptr) {
-			//	var _arg0 *C.GstVideoOverlay // out
-			//	var _arg1 C.guintptr         // out
-			//
-			//	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
-			//	_arg1 = (C.guintptr)(handle)
-			//
-			//	C.gst_video_overlay_set_window_handle(_arg0, _arg1)
-			//	runtime.KeepAlive(overlay)
-			//	runtime.KeepAlive(handle)
-			//}
-			//
-			//// setWindowHandle: this will call the video overlay's set_window_handle method.
-			//// You should use this method to tell to an overlay to display video output to a
-			//// specific window (e.g. an XWindow on X11). Passing 0 as the handle will tell
-			//// the overlay to stop using that window and create an internal one.
-			////
-			//// The function takes the following parameters:
-			////
-			////    - handle referencing the window.
-			////
-			//func (overlay *VideoOverlay) setWindowHandle(handle uintptr) {
-			//	gclass := (*C.GstVideoOverlayInterface)(coreglib.PeekParentClass(overlay))
-			//	fnarg := gclass.set_window_handle
-			//
-			//	var _arg0 *C.GstVideoOverlay // out
-			//	var _arg1 C.guintptr         // out
-			//
-			//	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
-			//	_arg1 = (C.guintptr)(handle)
-			//
-			//	C._gotk4_gstvideo1_VideoOverlay_virtual_set_window_handle(unsafe.Pointer(fnarg), _arg0, _arg1)
-			//	runtime.KeepAlive(overlay)
-			//	runtime.KeepAlive(handle)
-			//}
-			//`,
 			// From https://github.com/tinyzimmer/go-gst/blob/main/gst/gst_mapinfo.go#L37
 			"gst/gstmemory.go": `
 // Reader returns a Reader for the contents of this map's memory.
@@ -280,6 +242,15 @@ func (m *MapInfo) MaxSize() int64 {
 func (m *MapInfo) Flags() MapFlags {
 	return MapFlags(m.native.flags)
 }`,
+			"gstapp/gstappsrc.go": `
+func (appsrc *AppSrc)Write(data []byte) (n int, err error) {
+	buffer := gst.NewBufferAllocate(nil, uint(len(data)), gst.NewAllocationParams())
+	mapInfo, _ := buffer.Map(gst.MapWrite)
+	mapInfo.WriteData(data)
+	buffer.Unmap(mapInfo)
+	appsrc.PushBuffer(buffer)
+	return len(data), nil
+}`,
 		},
 	},
 )
@@ -296,10 +267,98 @@ func RenameBitfieldMembers(bitfield, regex, replace string) PreprocessorFunc {
 	}
 }
 
+func RemoveDuplicates(bitfield string) PreprocessorFunc {
+	return func(repos gir.Repositories) {
+		bitfield := repos.FindFullType(bitfield).Type.(*gir.Bitfield)
+		members := make(map[string]gir.Member)
+		for _, member := range bitfield.Members {
+			members[member.Name()] = member
+		}
+		var memberss []gir.Member
+		for _, member := range members {
+			memberss = append(memberss, member)
+		}
+		bitfield.Members = memberss
+	}
+}
+
 func main() {
-	//genmain.Verbose = true
+	genmain.Verbose = true
 	//genmain.ListPkg = true
 	genmain.Run(Data)
+	dataB, _ := os.ReadFile("pkg/gstvideo/videooverlay.go")
+	data := string(dataB)
+	data = strings.ReplaceAll(data, `func (overlay *VideoOverlay) GotWindowHandle(handle uintptr) {
+	var _arg0 *C.GstVideoOverlay // out
+	var _arg1 C.guintptr         // out
+
+	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
+	_arg1 = (C.guintptr)(unsafe.Pointer(handle))
+
+	C.gst_video_overlay_got_window_handle(_arg0, _arg1)
+	runtime.KeepAlive(overlay)
+	runtime.KeepAlive(handle)
+}`, `func (overlay *VideoOverlay) GotWindowHandle(handle uintptr) {
+	var _arg0 *C.GstVideoOverlay // out
+	var _arg1 C.guintptr         // out
+
+	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
+	_arg1 = (C.guintptr)(handle)
+
+	C.gst_video_overlay_got_window_handle(_arg0, _arg1)
+	runtime.KeepAlive(overlay)
+	runtime.KeepAlive(handle)
+}`)
+	data = strings.ReplaceAll(data, `func (overlay *VideoOverlay) setWindowHandle(handle uintptr) {
+	gclass := (*C.GstVideoOverlayInterface)(coreglib.PeekParentClass(overlay))
+	fnarg := gclass.set_window_handle
+
+	var _arg0 *C.GstVideoOverlay // out
+	var _arg1 C.guintptr         // out
+
+	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
+	_arg1 = (C.guintptr)(unsafe.Pointer(handle))
+
+	C._gotk4_gstvideo1_VideoOverlay_virtual_set_window_handle(unsafe.Pointer(fnarg), _arg0, _arg1)
+	runtime.KeepAlive(overlay)
+	runtime.KeepAlive(handle)
+}`, `func (overlay *VideoOverlay) setWindowHandle(handle uintptr) {
+	gclass := (*C.GstVideoOverlayInterface)(coreglib.PeekParentClass(overlay))
+	fnarg := gclass.set_window_handle
+
+	var _arg0 *C.GstVideoOverlay // out
+	var _arg1 C.guintptr         // out
+
+	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
+	_arg1 = (C.guintptr)(handle)
+
+	C._gotk4_gstvideo1_VideoOverlay_virtual_set_window_handle(unsafe.Pointer(fnarg), _arg0, _arg1)
+	runtime.KeepAlive(overlay)
+	runtime.KeepAlive(handle)
+}`)
+	data = strings.ReplaceAll(data, `func (overlay *VideoOverlay) SetWindowHandle(handle uintptr) {
+	var _arg0 *C.GstVideoOverlay // out
+	var _arg1 C.guintptr         // out
+
+	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
+	_arg1 = (C.guintptr)(unsafe.Pointer(handle))
+
+	C.gst_video_overlay_set_window_handle(_arg0, _arg1)
+	runtime.KeepAlive(overlay)
+	runtime.KeepAlive(handle)
+}`, `func (overlay *VideoOverlay) SetWindowHandle(handle uintptr) {
+	var _arg0 *C.GstVideoOverlay // out
+	var _arg1 C.guintptr         // out
+
+	_arg0 = (*C.GstVideoOverlay)(unsafe.Pointer(coreglib.InternObject(overlay).Native()))
+	_arg1 = (C.guintptr)(handle)
+
+	C.gst_video_overlay_set_window_handle(_arg0, _arg1)
+	runtime.KeepAlive(overlay)
+	runtime.KeepAlive(handle)
+}`)
+	os.WriteFile("pkg/gstvideo/videooverlay.go", []byte(data), 0666)
+
 }
 
 func AddImports(file string, names ...string) girgen.Postprocessor {

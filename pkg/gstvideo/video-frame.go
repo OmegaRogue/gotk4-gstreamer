@@ -40,26 +40,29 @@ func init() {
 type VideoBufferFlags C.guint
 
 const (
-	// VideoBufferFlagInterlaced: if the Buffer is interlaced. In mixed
-	// interlace-mode, this flags specifies if the frame is interlaced or
-	// progressive.
-	VideoBufferFlagInterlaced VideoBufferFlags = 0b100000000000000000000
 	// VideoBufferFlagTff: if the Buffer is interlaced, then the first field in
 	// the video frame is the top field. If unset, the bottom field is first.
 	VideoBufferFlagTff VideoBufferFlags = 0b1000000000000000000000
 	// VideoBufferFlagRff: if the Buffer is interlaced, then the first field (as
 	// defined by the GST_VIDEO_BUFFER_FLAG_TFF flag setting) is repeated.
 	VideoBufferFlagRff VideoBufferFlags = 0b10000000000000000000000
-	// VideoBufferFlagOnefield: if the Buffer is interlaced, then only the first
-	// field (as defined by the GST_VIDEO_BUFFER_FLAG_TFF flag setting) is to be
-	// displayed (Since: 1.16).
-	VideoBufferFlagOnefield VideoBufferFlags = 0b100000000000000000000000
 	// VideoBufferFlagMultipleView contains one or more specific views, such as
 	// left or right eye view. This flags is set on any buffer that contains
 	// non-mono content - even for streams that contain only a single viewpoint.
 	// In mixed mono / non-mono streams, the absence of the flag marks mono
 	// buffers.
 	VideoBufferFlagMultipleView VideoBufferFlags = 0b1000000000000000000000000
+	// VideoBufferFlagMarker contains the end of a video field or frame boundary
+	// such as the last subframe or packet (Since: 1.18).
+	VideoBufferFlagMarker VideoBufferFlags = 0b1000000000
+	// VideoBufferFlagInterlaced: if the Buffer is interlaced. In mixed
+	// interlace-mode, this flags specifies if the frame is interlaced or
+	// progressive.
+	VideoBufferFlagInterlaced VideoBufferFlags = 0b100000000000000000000
+	// VideoBufferFlagOnefield: if the Buffer is interlaced, then only the first
+	// field (as defined by the GST_VIDEO_BUFFER_FLAG_TFF flag setting) is to be
+	// displayed (Since: 1.16).
+	VideoBufferFlagOnefield VideoBufferFlags = 0b100000000000000000000000
 	// VideoBufferFlagFirstInBundle: when conveying stereo/multiview content
 	// with frame-by-frame methods, this flag marks the first buffer in a bundle
 	// of frames that belong together.
@@ -69,18 +72,11 @@ const (
 	// (Since: 1.16). Use GST_VIDEO_BUFFER_IS_TOP_FIELD() to check for this
 	// flag.
 	VideoBufferFlagTopField VideoBufferFlags = 0b101000000000000000000000
-	// VideoBufferFlagOnefield: if the Buffer is interlaced, then only the first
-	// field (as defined by the GST_VIDEO_BUFFER_FLAG_TFF flag setting) is to be
-	// displayed (Since: 1.16).
-	VideoBufferFlagOnefield VideoBufferFlags = 0b100000000000000000000000
 	// VideoBufferFlagBottomField: video frame has the bottom field only. This
 	// is the same as GST_VIDEO_BUFFER_FLAG_ONEFIELD (GST_VIDEO_BUFFER_FLAG_TFF
 	// flag unset) (Since: 1.16). Use GST_VIDEO_BUFFER_IS_BOTTOM_FIELD() to
 	// check for this flag.
 	VideoBufferFlagBottomField VideoBufferFlags = 0b100000000000000000000000
-	// VideoBufferFlagMarker contains the end of a video field or frame boundary
-	// such as the last subframe or packet (Since: 1.18).
-	VideoBufferFlagMarker VideoBufferFlags = 0b1000000000
 	// VideoBufferFlagLast: offset to define more flags.
 	VideoBufferFlagLast VideoBufferFlags = 0b10000000000000000000000000000
 )
@@ -96,29 +92,29 @@ func (v VideoBufferFlags) String() string {
 	}
 
 	var builder strings.Builder
-	builder.Grow(256)
+	builder.Grow(237)
 
 	for v != 0 {
 		next := v & (v - 1)
 		bit := v - next
 
 		switch bit {
-		case VideoBufferFlagInterlaced:
-			builder.WriteString("Interlaced|")
 		case VideoBufferFlagTff:
 			builder.WriteString("Tff|")
 		case VideoBufferFlagRff:
 			builder.WriteString("Rff|")
-		case VideoBufferFlagOnefield:
-			builder.WriteString("Onefield|")
 		case VideoBufferFlagMultipleView:
 			builder.WriteString("MultipleView|")
+		case VideoBufferFlagMarker:
+			builder.WriteString("Marker|")
+		case VideoBufferFlagInterlaced:
+			builder.WriteString("Interlaced|")
+		case VideoBufferFlagOnefield:
+			builder.WriteString("Onefield|")
 		case VideoBufferFlagFirstInBundle:
 			builder.WriteString("FirstInBundle|")
 		case VideoBufferFlagTopField:
 			builder.WriteString("TopField|")
-		case VideoBufferFlagMarker:
-			builder.WriteString("Marker|")
 		case VideoBufferFlagLast:
 			builder.WriteString("Last|")
 		default:
@@ -146,10 +142,6 @@ const (
 	// interlace-mode, this flag specifies if the frame is interlaced or
 	// progressive.
 	VideoFrameFlagInterlaced VideoFrameFlags = 0b1
-	// VideoFrameFlagTff: video frame has the top field first.
-	VideoFrameFlagTff VideoFrameFlags = 0b10
-	// VideoFrameFlagRff: video frame has the repeat flag.
-	VideoFrameFlagRff VideoFrameFlags = 0b100
 	// VideoFrameFlagOnefield: video frame has one field.
 	VideoFrameFlagOnefield VideoFrameFlags = 0b1000
 	// VideoFrameFlagMultipleView: video contains one or more non-mono views.
@@ -161,8 +153,10 @@ const (
 	// same as GST_VIDEO_FRAME_FLAG_TFF | GST_VIDEO_FRAME_FLAG_ONEFIELD (Since:
 	// 1.16).
 	VideoFrameFlagTopField VideoFrameFlags = 0b1010
-	// VideoFrameFlagOnefield: video frame has one field.
-	VideoFrameFlagOnefield VideoFrameFlags = 0b1000
+	// VideoFrameFlagTff: video frame has the top field first.
+	VideoFrameFlagTff VideoFrameFlags = 0b10
+	// VideoFrameFlagRff: video frame has the repeat flag.
+	VideoFrameFlagRff VideoFrameFlags = 0b100
 	// VideoFrameFlagBottomField: video frame has the bottom field only. This is
 	// the same as GST_VIDEO_FRAME_FLAG_ONEFIELD (GST_VIDEO_FRAME_FLAG_TFF flag
 	// unset) (Since: 1.16).
@@ -180,7 +174,7 @@ func (v VideoFrameFlags) String() string {
 	}
 
 	var builder strings.Builder
-	builder.Grow(229)
+	builder.Grow(206)
 
 	for v != 0 {
 		next := v & (v - 1)
@@ -191,10 +185,6 @@ func (v VideoFrameFlags) String() string {
 			builder.WriteString("None|")
 		case VideoFrameFlagInterlaced:
 			builder.WriteString("Interlaced|")
-		case VideoFrameFlagTff:
-			builder.WriteString("Tff|")
-		case VideoFrameFlagRff:
-			builder.WriteString("Rff|")
 		case VideoFrameFlagOnefield:
 			builder.WriteString("Onefield|")
 		case VideoFrameFlagMultipleView:
@@ -203,6 +193,10 @@ func (v VideoFrameFlags) String() string {
 			builder.WriteString("FirstInBundle|")
 		case VideoFrameFlagTopField:
 			builder.WriteString("TopField|")
+		case VideoFrameFlagTff:
+			builder.WriteString("Tff|")
+		case VideoFrameFlagRff:
+			builder.WriteString("Rff|")
 		default:
 			builder.WriteString(fmt.Sprintf("VideoFrameFlags(0b%b)|", bit))
 		}
